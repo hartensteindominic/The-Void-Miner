@@ -1,113 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETH_MISSION_CONTROL_v8</title>
-    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
-        :root { --neon: #00ffad; --bg: #050505; }
-        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow-x: hidden; text-align: center; }
-        
-        /* Rocket HUD */
-        #rocket { 
-            position: fixed; bottom: -150px; left: 50%; transform: translateX(-50%);
-            font-size: 80px; transition: bottom 2.5s ease-in; z-index: 1000; filter: drop-shadow(0 0 15px orange);
-        }
-        .launch { bottom: 150vh !important; }
-
-        .dashboard { padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .video-core { 
-            width: 95%; max-width: 720px; aspect-ratio: 16/9; 
-            border: 3px solid var(--neon); box-shadow: 0 0 30px rgba(0,255,173,0.4); 
-            background: #000; margin: 20px 0; border-radius: 8px; overflow: hidden;
-        }
-        
-        .ad-row { display: flex; gap: 15px; width: 100%; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
-        .ad-unit { background: #0a0a0a; border: 1px solid #1a1a1a; padding: 5px; }
-
-        .big-launch-btn { 
-            background: #ff4500; color: white; border: none; padding: 25px 50px; 
-            font-weight: bold; cursor: pointer; font-family: 'Courier New';
-            font-size: 1.5rem; letter-spacing: 3px; border-radius: 5px;
-            box-shadow: 0 0 20px #ff4500; margin: 30px 0;
-        }
-
-        /* Node Switcher */
-        .node-nav {
-            position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.9);
-            padding: 10px; border: 1px solid var(--neon); font-size: 0.7rem; z-index: 1001;
-        }
-        .node-nav a { color: var(--neon); text-decoration: none; font-weight: bold; }
+        body { background: #050505; color: #bc13fe; font-family: monospace; text-align: center; padding: 20px; }
+        .radio-container { border: 2px solid #bc13fe; padding: 10px; margin: 20px auto; max-width: 400px; }
+        .btn { display: block; border: 1px solid #bc13fe; padding: 15px; color: #bc13fe; text-decoration: none; margin: 10px auto; max-width: 200px; }
     </style>
 </head>
 <body>
+    <h1>NODE_02: VOID_MINER</h1>
+    <p>LOFI_UPLINK: ACTIVE</p>
 
-<div id="rocket">🚀</div>
-
-<div class="dashboard">
-    <h1 style="margin:0; text-shadow: 0 0 10px var(--neon);">NODE_01: MISSION_CONTROL</h1>
-    <div style="font-size: 0.6rem; opacity: 0.5; margin-bottom: 10px;">TARGET: 0x13B87B819252A81381C3Ce35e3Bd33199F4c6650</div>
-    <div style="font-size: 0.8rem;">CYCLE_REFRESH: <span id="timer">30</span>s</div>
-
-    <div class="ad-row">
-        <div class="ad-unit"><iframe id="ad1" data-aa='2426199' src='https://acceptable.a-ads.com/2426199/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
-        <div class="ad-unit"><iframe id="ad2" data-aa='2426200' src='https://acceptable.a-ads.com/2426200/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
+    <div class="radio-container">
+        <iframe width="100%" height="200" src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1" frameborder="0" allow="autoplay"></iframe>
     </div>
 
-    <div class="video-core">
-        <div id="player"></div>
-    </div>
+    <iframe data-aa='2426201' src='https://acceptable.a-ads.com/2426201/?size=Adaptive' style='border:0; width:100%; height:100px;'></iframe>
 
-    <button class="big-launch-btn" onclick="blastOff()">[ LAUNCH_REVENUE ]</button>
-
-    <div class="ad-row">
-        <div class="ad-unit"><iframe id="ad3" data-aa='2426201' src='https://acceptable.a-ads.com/2426201/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
-        <div class="ad-unit"><iframe id="ad4" data-aa='2426202' src='https://acceptable.a-ads.com/2426202/?size=Adaptive' style='border:0; width:300px; height:50px;'></iframe></div>
-    </div>
-</div>
-
-<div class="node-nav">
-    <span>ACTIVE_NODE: 01</span> | 
-    <a href="https://hartensteindominic.github.io/void-miner/">[ SWITCH_TO_VOID_NODE_02 ]</a>
-</div>
-
-<script>
-    // YouTube API Logic
-    let player;
-    function onYouTubeIframeAPIReady() {
-        player = new YT.Player('player', {
-            height: '100%', width: '100%', videoId: 'q_r0THGGLy4',
-            playerVars: { 'autoplay': 0, 'controls': 1, 'rel': 0 },
-        });
-    }
-
-    // Refresh Logic (Safe 30s)
-    let timeLeft = 30;
-    setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').innerText = timeLeft;
-        if (timeLeft <= 0) {
-            refreshAds();
-            timeLeft = 30;
-        }
-    }, 1000);
-
-    function refreshAds() {
-        ['ad1', 'ad2', 'ad3', 'ad4'].forEach(id => {
-            const f = document.getElementById(id); 
-            f.src = f.src; 
-        });
-    }
-
-    function blastOff() {
-        if (player && player.playVideo) player.playVideo();
-        const r = document.getElementById('rocket');
-        r.classList.add('launch');
-        refreshAds();
-        setTimeout(() => { r.classList.remove('launch'); }, 3000);
-    }
-</script>
-
+    <a href="https://hartensteindominic.github.io/" class="btn">RETURN_TO_HUB</a>
 </body>
 </html>
