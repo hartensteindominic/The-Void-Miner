@@ -127,7 +127,7 @@ To build the project from source:
 ### Running Tests
 
 ```bash
-python -m pytest tests/
+python -m unittest discover tests/ -v
 ```
 
 ## License
