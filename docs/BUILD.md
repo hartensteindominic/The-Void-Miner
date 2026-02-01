@@ -80,11 +80,14 @@ If you prefer to build manually or need more control:
 
 ## Verifying the Build
 
-After building, verify the installation:
+After building, verify the installation by running the game briefly:
 
 ```bash
-void-miner --version  # Check if command is available
-python -m void_miner  # Alternative way to run
+# The game window should open (press ESC to close)
+void-miner
+
+# Or using Python module syntax
+python -m void_miner
 ```
 
 ## Troubleshooting
