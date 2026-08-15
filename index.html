@@ -62,11 +62,11 @@ canvas{display:block;width:100%;height:100%}
     <div class="card-title">Live Dimensional Video Capture → Multi-Layer 5D+</div>
     <button id="scan-toggle-btn" class="danger-btn" onclick="toggleInfiniteScanning()">START DIMENSIONAL STREAM</button>
     <div class="layer-control-row"><span>Node Step</span><input type="range" id="density-step" min="1" max="5" step="1" value="2" oninput="stepSize=parseInt(this.value);document.getElementById('density-val').innerText=this.value+'px'"><span id="density-val">2px</span></div>
-    <div class="layer-control-row"><span>Depth Amp</span><input type="range" id="depth-z" min="4" max="48" step="0.5" value="26" oninput="depthMultiplier=parseFloat(this.value)"></div>
-    <div class="layer-control-row"><span>Point Size</span><input type="range" id="point-size" min="0.012" max="0.09" step="0.002" value="0.034" oninput="currentPointSize=parseFloat(this.value);updatePointSizes()"></div>
+    <div class="layer-control-row"><span>Depth Amp</span><input type="range" id="depth-z" min="4" max="48" step="0.5" value="30" oninput="depthMultiplier=parseFloat(this.value)"></div>
+    <div class="layer-control-row"><span>Point Size</span><input type="range" id="point-size" min="0.012" max="0.1" step="0.002" value="0.042" oninput="currentPointSize=parseFloat(this.value);updatePointSizes()"></div>
     <div class="layer-control-row"><span>Layers</span><input type="range" id="layer-count" min="1" max="8" step="1" value="5" oninput="layerCount=parseInt(this.value);document.getElementById('layer-val').innerText=this.value;rebuildLayerChips()"><span id="layer-val">5</span></div>
-    <div class="layer-control-row"><span>Layer Depth</span><input type="range" id="layer-spread" min="0.08" max="0.85" step="0.01" value="0.38" oninput="layerSpread=parseFloat(this.value)"></div>
-    <div class="layer-control-row"><span>Temporal Smooth</span><input type="range" id="smooth-factor" min="0" max="0.92" step="0.02" value="0.62" oninput="smoothFactor=parseFloat(this.value)"></div>
+    <div class="layer-control-row"><span>Layer Depth</span><input type="range" id="layer-spread" min="0.08" max="0.85" step="0.01" value="0.42" oninput="layerSpread=parseFloat(this.value)"></div>
+    <div class="layer-control-row"><span>Temporal Smooth</span><input type="range" id="smooth-factor" min="0" max="0.92" step="0.02" value="0.72" oninput="smoothFactor=parseFloat(this.value)"></div>
     <div style="font-size:9px;color:#94a3b8">Live Nodes: <span id="node-counter">0</span> · Frames: <span id="frame-counter">0</span> · Layers: <span id="live-layers">5</span></div>
     <button class="primary-btn" style="background:#059669" onclick="exportRecordedJSON()">Export JSON</button>
     <button class="secondary-btn" onclick="copyJSONToClipboard()">Copy JSON</button>
@@ -100,7 +100,7 @@ canvas{display:block;width:100%;height:100%}
         <option value="wireframe">Wireframe</option>
       </select>
     </div>
-    <div class="layer-control-row"><span>Meta-Axis E</span><input type="range" id="e-meta-range" min="0" max="100" step="1" value="12" oninput="updateMetaDimension(this.value)"><span id="e-meta-val">0.12</span></div>
+    <div class="layer-control-row"><span>Meta-Axis E</span><input type="range" id="e-meta-range" min="0" max="100" step="1" value="10" oninput="updateMetaDimension(this.value)"><span id="e-meta-val">0.10</span></div>
     <div class="layer-control-row"><span>Time Scrub T</span><input type="range" id="t-scrub-range" min="0" max="100" step="1" value="0" oninput="updateTScrubs(this.value)"><span id="t-scrub-val">0 / 0</span></div>
     <div class="layer-control-row"><span>Playback FPS</span><input type="range" id="fps-range" min="6" max="30" step="1" value="18" oninput="currentFPS=parseInt(this.value);document.getElementById('fps-label').innerText=this.value"><span id="fps-label">18</span></div>
     <div class="layer-control-row"><span>Grid</span><input type="checkbox" id="grid-toggle" checked onchange="toggleGrid(this.checked)"></div>
@@ -159,9 +159,9 @@ let scene, camera, renderer, controls, gridHelper;
 let spatialLayers = [];
 let video, canvas2D, ctx2D;
 let isInfiniteScanning = false, recorded4DFrames = [], frameIndex = 0;
-let stepSize = 2, depthMultiplier = 26, currentPointSize = 0.034;
-let layerCount = 5, layerSpread = 0.38, smoothFactor = 0.62;
-let currentRenderMode = 'points', currentMetaValue = 0.12, currentFPS = 18;
+let stepSize = 2, depthMultiplier = 30, currentPointSize = 0.042;
+let layerCount = 5, layerSpread = 0.42, smoothFactor = 0.72;
+let currentRenderMode = 'points', currentMetaValue = 0.10, currentFPS = 18;
 let isPlayMode = true, playbackFrames = [], playbackFrameIndex = 0, lastFrameTime = 0;
 let rawSourceFrames = [];
 let isMappingActive = false, mappedPins = [];
@@ -188,27 +188,28 @@ window.addEventListener('DOMContentLoaded', () => {
 function init3D() {
   const c = document.getElementById('viewer-container');
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x030712, 0.045);
-  camera = new THREE.PerspectiveCamera(52, c.clientWidth / c.clientHeight, 0.03, 3000);
-  camera.position.set(0, 0.35, 3.8);
+  scene.fog = new THREE.FogExp2(0x030712, 0.038);
+  camera = new THREE.PerspectiveCamera(50, c.clientWidth / c.clientHeight, 0.03, 3000);
+  camera.position.set(0, 0.28, 3.6);
   const canvas = document.getElementById('three-canvas');
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
   renderer.setSize(c.clientWidth, c.clientHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
   renderer.setClearColor(0x030712);
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.055;
-  controls.rotateSpeed = 0.65;
+  controls.dampingFactor = 0.05;
+  controls.rotateSpeed = 0.6;
   controls.autoRotate = true;
-  controls.autoRotateSpeed = 0.9;
-  gridHelper = new THREE.GridHelper(36, 36, 0x1e293b, 0x0f172a);
-  gridHelper.position.y = -1.65;
+  controls.autoRotateSpeed = 0.7;
+  gridHelper = new THREE.GridHelper(40, 40, 0x1e293b, 0x0f172a);
+  gridHelper.position.y = -1.7;
   scene.add(gridHelper);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const d1 = new THREE.DirectionalLight(0xffffff, 0.9); d1.position.set(2.5, 4.5, 5); scene.add(d1);
-  const d2 = new THREE.DirectionalLight(0xa855f7, 0.5); d2.position.set(-4, -1.5, -3); scene.add(d2);
-  const d3 = new THREE.DirectionalLight(0x38bdf8, 0.25); d3.position.set(0, 3, -4); scene.add(d3);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const d1 = new THREE.DirectionalLight(0xffffff, 1.0); d1.position.set(2.8, 5, 5.5); scene.add(d1);
+  const d2 = new THREE.DirectionalLight(0xa855f7, 0.55); d2.position.set(-4.5, -1.2, -3.5); scene.add(d2);
+  const d3 = new THREE.DirectionalLight(0x38bdf8, 0.35); d3.position.set(0, 3.5, -5); scene.add(d3);
+  const d4 = new THREE.PointLight(0xc084fc, 0.35, 12); d4.position.set(0, 1.5, 2); scene.add(d4);
   window.addEventListener('resize', onWindowResize);
   renderer.domElement.addEventListener('click', handleCanvasClick);
   animate();
@@ -257,30 +258,50 @@ function animate(now) {
     ctx2D.drawImage(video, 0, 0, vw, vh);
     const pixels = ctx2D.getImageData(0, 0, vw, vh).data;
 
-    // Improved depth mapping for cleaner dimensional structure
+    // Refined subject-centric depth mapping — cleaner dimensional video
     const basePos = [], baseCol = [];
     const invW = 1 / vw, invH = 1 / vh;
+    const cx = vw * 0.5, cy = vh * 0.5;
+    const maxR = Math.sqrt(cx * cx + cy * cy);
+
     for (let y = 0; y < vh; y += stepSize) {
       for (let x = 0; x < vw; x += stepSize) {
         const idx = (y * vw + x) * 4;
         const r = pixels[idx] / 255, g = pixels[idx + 1] / 255, b = pixels[idx + 2] / 255;
 
-        // Normalized coords centered
         const nx = ((vw - x) * invW) * 2 - 1;
         const ny = -(y * invH * 2 - 1);
 
-        // Perceptual luminance + mild local contrast boost
+        // Perceptual luminance
         const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        // Soft contrast curve that preserves midtones but expands depth range
-        const depthRaw = Math.pow(Math.max(0.001, lum), 0.72);
-        // Center the depth around a neutral plane and amplify
-        const nz = (depthRaw - 0.38) * (depthMultiplier * 0.155);
 
-        // Slight radial pull so the subject feels more volumetric / less flat
-        const radial = 1 - 0.08 * (nx * nx + ny * ny);
+        // Stronger subject isolation — discard dark background for a focused volume
+        if (lum < 0.10) continue;
 
-        basePos.push(nx * 1.65 * radial, ny * 1.65 * radial, nz);
-        baseCol.push(r, g, b);
+        // Depth curve: expand midtones, keep highlights forward
+        let depthRaw = Math.pow(lum, 0.62);
+        const dx = (x - cx) / maxR, dy = (y - cy) / maxR;
+        const centerBias = 1 - 0.22 * (dx * dx + dy * dy);
+        depthRaw *= centerBias;
+
+        const nz = (depthRaw - 0.28) * (depthMultiplier * 0.175);
+
+        // Soft cylindrical wrap for natural 3D roundness
+        const wrap = 1 + 0.055 * (nx * nx);
+        const px = nx * 1.55 * wrap;
+        const py = ny * 1.55;
+
+        basePos.push(px, py, nz);
+
+        // Mild saturation lift + slight brightness for clearer volumetric color
+        const sat = 1.15;
+        const avg = (r + g + b) / 3;
+        const lift = 0.04;
+        baseCol.push(
+          Math.min(1, avg + (r - avg) * sat + lift),
+          Math.min(1, avg + (g - avg) * sat + lift),
+          Math.min(1, avg + (b - avg) * sat + lift)
+        );
       }
     }
 
@@ -316,7 +337,7 @@ function animate(now) {
     for (let L = 0; L < spatialLayers.length; L++) {
       const obj = spatialLayers[L];
       if (!obj || !obj.visible) continue;
-      const breath = 1 + Math.sin(timePhase * 1.4 + L * 0.7) * 0.018;
+      const breath = 1 + Math.sin(timePhase * 1.1 + L * 0.55) * 0.012;
       obj.scale.set(breath, breath, breath);
     }
   }
@@ -354,35 +375,37 @@ function updateLiveMultiLayers(basePos, baseCol, now) {
   }
 
   const nodeCount = basePos.length / 3;
-  const metaOffset = currentMetaValue * 0.38;
+  if (nodeCount < 8) return;
+
+  const metaOffset = currentMetaValue * 0.34;
   const maxL = Math.max(1, layerCount - 1);
 
   for (let L = 0; L < layerCount; L++) {
-    // Smooth non-linear distribution of layers for cleaner dimensional stacking
-    const t = (L / maxL) - 0.5;                 // -0.5 → +0.5
-    const ease = t * (1.15 - 0.25 * t * t);     // slight ease for better spacing
+    // Smooth eased distribution — front tight, rear more open
+    const t = L / maxL;
+    const ease = t * t * (3 - 2 * t);
+    const signed = ease - 0.5;
 
-    // Stronger, cleaner spatial separation
-    const depthOffset = ease * layerSpread * 2.85;
-    const yOffset     = ease * layerSpread * 0.55;
-    const xParallax   = ease * layerSpread * 0.22;
-    // Subtle scale so deeper layers expand slightly (cinematic depth)
-    const scale = 1 + ease * 0.065;
+    // Stronger Z separation for clearer dimensional planes
+    const depthOffset = signed * layerSpread * 3.4;
+    const yOffset     = signed * layerSpread * 0.22;
+    const xParallax   = signed * layerSpread * 0.11;
+    const scale = 1 + signed * 0.048;
 
-    // Color: front layers warmer / higher contrast, rear layers cooler + softer
-    const frontness = 1 - (L / layerCount);
-    const warm = 0.92 + frontness * 0.18;
-    const cool = 0.78 + (1 - frontness) * 0.45;
+    // Front warmer/brighter, rear cooler/softer
+    const frontness = 1 - t;
+    const warm = 0.96 + frontness * 0.12;
+    const cool = 0.85 + (1 - frontness) * 0.32;
 
     const pos = new Float32Array(nodeCount * 3);
     const col = new Float32Array(nodeCount * 3);
 
     for (let i = 0, j = 0; i < nodeCount; i++, j += 3) {
       let px = basePos[j]     * scale + xParallax;
-      let py = basePos[j + 1] * scale + yOffset + metaOffset * (0.55 + L * 0.06);
+      let py = basePos[j + 1] * scale + yOffset + metaOffset * (0.45 + L * 0.04);
       let pz = basePos[j + 2] * scale + depthOffset;
 
-      // Temporal smoothing (makes the volume feel like continuous video)
+      // Temporal smoothing → continuous video motion
       if (prevLayerPos[L] && prevLayerPos[L].length === pos.length && smoothFactor > 0.01) {
         const prev = prevLayerPos[L];
         const s = smoothFactor;
@@ -393,17 +416,16 @@ function updateLiveMultiLayers(basePos, baseCol, now) {
 
       pos[j] = px; pos[j + 1] = py; pos[j + 2] = pz;
 
-      // Preserve subject colors while adding dimensional grading
       col[j]     = Math.min(1, baseCol[j]     * warm);
-      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.97 + L * 0.015));
+      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.99 + L * 0.01));
       col[j + 2] = Math.min(1, baseCol[j + 2] * cool);
     }
 
     prevLayerPos[L] = pos;
 
-    // Opacity & size falloff that makes the volume feel solid rather than noisy
-    const sizeMul = 1.08 - L * 0.045;
-    const opac    = 0.88 - L * 0.07;
+    // Larger, denser points → solid volumetric look instead of grain
+    const sizeMul = 1.18 - L * 0.06;
+    const opac    = 0.92 - L * 0.09;
 
     let obj = spatialLayers[L];
     if (!obj) {
@@ -423,10 +445,16 @@ function updateLiveMultiLayers(basePos, baseCol, now) {
       scene.add(obj);
       spatialLayers[L] = obj;
     } else {
-      obj.geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      obj.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3));
-      obj.geometry.attributes.position.needsUpdate = true;
-      obj.geometry.attributes.color.needsUpdate = true;
+      const oldCount = obj.geometry.attributes.position ? obj.geometry.attributes.position.count : 0;
+      if (oldCount !== nodeCount) {
+        obj.geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        obj.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      } else {
+        obj.geometry.attributes.position.array.set(pos);
+        obj.geometry.attributes.color.array.set(col);
+        obj.geometry.attributes.position.needsUpdate = true;
+        obj.geometry.attributes.color.needsUpdate = true;
+      }
       if (obj.material.size !== undefined) {
         obj.material.size = currentPointSize * sizeMul;
         obj.material.opacity = opac;
@@ -440,7 +468,7 @@ function updateLiveMultiLayers(basePos, baseCol, now) {
 function updatePointSizes() {
   spatialLayers.forEach((obj, L) => {
     if (obj && obj.material && obj.material.size !== undefined) {
-      obj.material.size = currentPointSize * (1.08 - L * 0.045);
+      obj.material.size = currentPointSize * (1.18 - L * 0.06);
     }
   });
 }
