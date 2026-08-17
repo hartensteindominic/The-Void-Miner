@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HyperStream Holographic World</title>
+
+<style>
+:root {
+  --bg-deep: #020508;
+  --bg-surface: rgba(7, 16, 25, 0.75);
+  --bg-card: #0b1620;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --accent-cyan: #38bdf8;
+  --accent-blue: #0284c7;
+  --accent-hover: #0369a1;
+  --text-main: #f0f9ff;
+  --text-muted: #94a3b8;
+  --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-deep);
+  color: var(--text-main);
+  font-family: var(--font-stack);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+#world {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: radial-gradient(circle at center, #071622 0%, #010307 100%);
+}
+
+#ui {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 10;
+  padding: 14px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.controls-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+button {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  background: rgba(2, 132, 199, 0.2);
+  color: var(--text-main);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button:hover {
+  background: var(--accent-blue);
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button.primary {
+  background: var(--accent-blue);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+button.primary:hover {
+  background: var(--accent-hover);
+}
+
+#status {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  color: var(--accent-cyan);
+}
+
+.small {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+#qr {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  place-items: center;
+  background: rgba(2, 5, 8, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.card {
+  padding: 28px;
+  border-radius: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  max-width: 320px;
+  width: 90%;
+}
+
+.card p {
+  margin: 0 0 20px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#code {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  background: #fff;
+  padding: 12px;
+  border-radius: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="world"></canvas>
+
+<div id="ui">
+  <div id="status">HyperStream ready · phone controller available</div>
+  
+  <div class="controls-grid">
+    <button id="vr" class="primary">Enter VR</button>
+    <button id="scan">Scan</button>
+    <button id="record">Record</button>
+    <button id="save">Save</button>
+    <button id="load">Enter Saved</button>
+    <button id="clear">Clear</button>
+    <button id="phoneQR">Phone QR</button>
+  </div>
+
+  <div id="stats" class="small">
+    World: empty · Recording: off · Phone: disconnected
+  </div>
+</div>
+
+<div id="qr">
+  <div class="card">
+    <div id="code"></div>
+    <p>Scan this QR code with your mobile device to connect the spatial bridge.</p>
+    <button id="closeQR" class="primary" style="width:100%;">Close</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<script type="module">
+const canvas = document.getElementById("world");
+const ctx = canvas.getContext("2d");
+
+const statusEl = document.getElementById("status");
+const statsEl = document.getElementById("stats");
+
+const vrButton = document.getElementById("vr");
+const scanButton = document.getElementById("scan");
+const recordButton = document.getElementById("record");
+const saveButton = document.getElementById("save");
+const loadButton = document.getElementById("load");
+const clearButton = document.getElementById("clear");
+const phoneQRButton = document.getElementById("phoneQR");
+
+const qr = document.getElementById("qr");
+const code = document.getElementById("code");
+const closeQR = document.getElementById("closeQR");
+
+let cells = [];
+let scanning = false;
+let recording = false;
+let phoneConnected = false;
+let frames = 0;
+let socket = null;
+let xrSession = null;
+
+let camera = { x: 0, y: 1.6, z: 0 };
+
+const CELL_SIZE = 0.15;
+const MAX_CELLS = 7000;
+const STORAGE_KEY = "hyperstream-clean-world-v2";
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+window.addEventListener("resize", resize);
+resize();
+
+function status(text) {
+  statusEl.textContent = text;
+}
+
+function cellKey(x, y, z) {
+  return [
+    Math.round(x / CELL_SIZE),
+    Math.round(y / CELL_SIZE),
+    Math.round(z / CELL_SIZE)
+  ].join(",");
+}
+
+function addSpatialPoint(x, y, z, confidence = 0.8) {
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return;
+
+  const key = cellKey(x, y, z);
+  let cell = cells.find(c => c.key === key);
+
+  if (cell) {
+    cell.x += (x - cell.x) * 0.15;
+    cell.y += (y - cell.y) * 0.15;
+    cell.z += (z - cell.z) * 0.15;
+    cell.confidence = Math.min(1, cell.confidence * 0.9 + confidence * 0.1);
+    cell.hits++;
+  } else {
+    if (cells.length >= MAX_CELLS) {
+      cells.sort((a, b) => (b.confidence * b.hits) - (a.confidence * a.hits));
+      cells.length = MAX_CELLS - 1;
+    }
+    cells.push({ key, x, y, z, confidence, hits: 1, time: Date.now() });
+  }
+}
+
+function generateFallbackSpace() {
+  if (!scanning) return;
+
+  for (let i = 0; i < 25; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 1 + Math.random() * 3;
+    const x = camera.x + Math.cos(angle) * radius;
+    const z = camera.z + Math.sin(angle) * radius;
+    const y = Math.max(0.05, camera.y + (Math.random() - 0.5) * 1.8);
+
+    addSpatialPoint(x, y, z, 0.65);
+  }
+
+  frames++;
+  draw();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  ctx.strokeStyle = "rgba(26, 82, 109, 0.35)";
+  ctx.globalAlpha = 0.35;
+  ctx.beginPath();
+  ctx.moveTo(0, height * 0.65);
+  ctx.lineTo(width, height * 0.65);
+  ctx.stroke();
+
+  const scale = Math.min(width, height) / 7;
+
+  for (const cell of cells) {
+    const depth = cell.z - camera.z + 5;
+    if (depth <= 0.15) continue;
+
+    const screenX = width / 2 + (cell.x - camera.x) * scale / depth;
+    const screenY = height / 2 - (cell.y - camera.y) * scale / depth;
+    const size = Math.max(1, 7 / depth);
+
+    ctx.globalAlpha = 0.2 + cell.confidence * 0.65;
+    ctx.fillStyle = cell.confidence > 0.8 ? "#38bdf8" : "#0284c7";
+
+    ctx.fillRect(screenX - size / 2, screenY - size / 2, size, size);
+  }
+
+  ctx.globalAlpha = 0.55;
+  ctx.strokeStyle = "#38bdf8";
+  ctx.beginPath();
+  ctx.arc(width / 2, height / 2, 7, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  updateStats();
+}
+
+function updateStats() {
+  statsEl.textContent = `World: ${cells.length} cells · Frames: ${frames} · Recording: ${recording ? "ON" : "off"} · Phone: ${phoneConnected ? "connected" : "disconnected"}`;
+}
+
+function connectSocket(url) {
+  try {
+    if (socket) socket.close();
+    socket = new WebSocket(url);
+
+    socket.onopen = () => {
+      phoneConnected = true;
+      status("Spatial bridge connected");
+      draw();
+    };
+
+    socket.onclose = () => {
+      phoneConnected = false;
+      status("Bridge disconnected · world retained");
+      draw();
+    };
+
+    socket.onerror = () => {
+      phoneConnected = false;
+      status("Bridge unavailable · local hologram mode");
+    };
+
+    socket.onmessage = event => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "controller") {
+          handleController(data);
+          return;
+        }
+        if (data.type === "spatial-frame") {
+          if (data.pose) {
+            camera = {
+              x: Number(data.pose.x) || 0,
+              y: Number(data.pose.y) || 1.6,
+              z: Number(data.pose.z) || 0
+            };
+          }
+          if (scanning && Array.isArray(data.points)) {
+            for (const p of data.points) {
+              addSpatialPoint(Number(p.x), Number(p.y), Number(p.z), Number(p.confidence) || 0.8);
+            }
+          }
+          frames++;
+          draw();
+        }
+      } catch (error) {
+        console.warn("Spatial packet error", error);
+      }
+    };
+  } catch (error) {
+    status("Connection error");
+  }
+}
+
+function handleController(data) {
+  const command = data.cmd;
+  if (command === "scan") {
+    scanning = true;
+    scanButton.textContent = "Stop Scan";
+    status("Phone started scanning");
+  } else if (command === "stop-scan") {
+    scanning = false;
+    scanButton.textContent = "Scan";
+    status("Scanning stopped");
+  } else if (command === "record") {
+    recording = !recording;
+    recordButton.textContent = recording ? "Stop" : "Record";
+    status(recording ? "Recording hologram" : "Recording stopped");
+  } else if (command === "save") {
+    saveWorld();
+  } else if (command === "load") {
+    loadWorld();
+  } else if (command === "clear") {
+    cells = [];
+    frames = 0;
+    draw();
+  } else if (command === "move" && data.move) {
+    camera.x += Number(data.move.x) || 0;
+    camera.y += Number(data.move.y) || 0;
+    camera.z += Number(data.move.z) || 0;
+    draw();
+  }
+}
+
+vrButton.onclick = async () => {
+  if (!navigator.xr) {
+    status("WebXR unavailable");
+    return;
+  }
+  try {
+    xrSession = await navigator.xr.requestSession("immersive-vr", {
+      optionalFeatures: ["local-floor", "bounded-floor"]
+    });
+    status("VR active · hologram ready");
+    xrSession.onend = () => { status("VR ended"); };
+  } catch (error) {
+    status("VR failed: " + error.message);
+  }
+};
+
+scanButton.onclick = () => {
+  scanning = !scanning;
+  scanButton.textContent = scanning ? "Stop Scan" : "Scan";
+  status(scanning ? "Scanning spatial world" : "Scanning paused");
+  if (scanning) generateFallbackSpace();
+};
+
+recordButton.onclick = () => {
+  recording = !recording;
+  recordButton.textContent = recording ? "Stop" : "Record";
+  status(recording ? "Recording hologram" : "Recording stopped");
+};
+
+function saveWorld() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      version: 2, cells, frames, camera, savedAt: Date.now()
+    }));
+    status(`Saved hologram · ${cells.length} cells`);
+  } catch (error) {
+    status("Save failed");
+  }
+}
+saveButton.onclick = saveWorld;
+
+function loadWorld() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      status("No saved hologram");
+      return;
+    }
+    const world = JSON.parse(raw);
+    cells = world.cells || [];
+    frames = world.frames || 0;
+    camera = world.camera || camera;
+    draw();
+    status(`Entered saved hologram · ${cells.length} cells`);
+  } catch (error) {
+    status("World load failed");
+  }
+}
+loadButton.onclick = loadWorld;
+
+clearButton.onclick = () => {
+  cells = [];
+  frames = 0;
+  draw();
+  status("Spatial world cleared");
+};
+
+phoneQRButton.onclick = () => {
+  const phoneURL = new URL("HyperStream_Phone.html", window.location.href);
+  code.innerHTML = "";
+  if (typeof QRCode !== "undefined") {
+    new QRCode(code, {
+      text: phoneURL.href,
+      width: 200,
+      height: 200,
+      colorDark: "#020508",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } else {
+    code.textContent = phoneURL.href;
+  }
+  qr.style.display = "grid";
+};
+
+closeQR.onclick = () => {
+  qr.style.display = "none";
+};
+
+draw();
+
+setInterval(() => {
+  if (scanning) generateFallbackSpace();
+}, 180);
+</script>
+
+</body>
+</html>
